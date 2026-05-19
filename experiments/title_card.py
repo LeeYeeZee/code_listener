@@ -37,12 +37,13 @@ def generate_title_card(
     page_index: int,
     total_pages: int,
     output_path: Path,
+    course_title: str = "",
 ) -> Path:
     """
     生成一页的标题卡片图片。
     
     布局（竖版 1080×1920）：
-    - 顶部留白约 35%
+    - 顶部课程总标题（小字灰色，如 "LevelDB 源码精讲"）
     - 页码（小号浅灰）
     - 标题（大号粗体黑色，居中）
     - 聚焦描述（中号深灰）
@@ -55,9 +56,18 @@ def generate_title_card(
     draw = ImageDraw.Draw(img)
     
     # 字体
+    font_course = _get_font(28)
     font_page = _get_font(32)
     font_title = _get_font(64, bold=True)
     font_desc = _get_font(40)
+    
+    # 0. 课程总标题（最顶部）
+    if course_title:
+        bbox = draw.textbbox((0, 0), course_title, font=font_course)
+        text_w = bbox[2] - bbox[0]
+        x = (WIDTH - text_w) // 2
+        y = 80
+        draw.text((x, y), course_title, fill=DESC_COLOR, font=font_course)
     
     # 1. 页码（上方）
     page_text = f"{page_index + 1:02d} / {total_pages:02d}"
