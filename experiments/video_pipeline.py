@@ -12,10 +12,11 @@ import sys
 from pathlib import Path
 
 from diagram_renderer import render_mermaid
-from tts_service import synthesize_speech
+from tts_service import synthesize_speech, synthesize_speech_mimo
 from video_maker import make_video, make_title_video, concat_videos
 from title_card import generate_title_card
 from mermaid_sanitizer import sanitize_mermaid, validate_mermaid
+import config
 
 OUTPUT_DIR = Path(__file__).parent / "output"
 VIDEO_DIR = OUTPUT_DIR / "videos"
@@ -84,7 +85,18 @@ async def main():
         
         # Step 2: TTS 合成音频
         print(f"   [Step 2/4] TTS 合成音频...")
-        mp3 = await synthesize_speech(narration_text, mp3_path)
+        
+        # 智能选择 TTS 引擎：优先 MiniMax，未配置则 fallback 到 MiMo
+        if config.MINIMAX_API_KEY:
+            mp3 = await synthesize_speech(narration_text, mp3_path)
+        elif config.MIMO_API_KEY:
+            print(f"      [提示] MiniMax 未配置，使用 MiMo TTS")
+            mp3 = await synthesize_speech_mimo(narration_text, mp3_path)
+        else:
+            print(f"   [跳过] 未配置任何 TTS API（MiniMax 或 MiMo）")
+            fail_count += 1
+            continue
+        
         if not mp3:
             print(f"   [跳过] 音频合成失败")
             fail_count += 1
